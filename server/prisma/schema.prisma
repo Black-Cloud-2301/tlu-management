@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String  @id @db.Char(6)
+  firstname   String
+  lastname    String
+  phoneNumber String?
+  address     String?
+  email       String?
+  hash        String
+  hashedRt    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  students Student?
+  teachers Teacher?
+
+  @@map("users")
+}
+
+model Teacher {
+  user      User   @relation(fields: [teacherId], references: [id])
+  teacherId String @id @db.Char(6)
+  salary    Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  studyDepartmentId String          @db.Char(6)
+  studyDepartment   StudyDepartment @relation("teachers", fields: [studyDepartmentId], references: [id])
+
+  dean      StudyDepartment? @relation("dean")
+  deanMajor Major?           @relation("dean_major")
+
+  @@map("teachers")
+}
+
+model StudyDepartment {
+  id   String @id @db.Char(6)
+  name String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dean   Teacher @relation("dean", fields: [deanId], references: [teacherId])
+  deanId String  @unique @db.Char(6)
+
+  teachers Teacher[] @relation("teachers")
+  major    Major[]
+
+  @@map("studydepartments")
+}
+
+model Major {
+  id   String @id @db.Char(6)
+  name String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dean   Teacher @relation("dean_major", fields: [deanId], references: [teacherId])
+  deanId String  @unique @db.Char(6)
+
+  studyDepartment   StudyDepartment @relation(fields: [studyDepartmentId], references: [id])
+  studyDepartmentId String          @db.Char(6)
+
+  students Student[]
+
+  @@map("majors")
+}
+
+model Student {
+  user      User   @relation(fields: [StudentId], references: [id])
+  StudentId String @id @db.Char(6)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  major   Major  @relation(fields: [majorId], references: [id])
+  majorId String @db.Char(6)
+
+  @@map("students")
+}
