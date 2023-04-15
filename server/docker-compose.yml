@@ -1,15 +1,52 @@
 version: '3.9'
 services:
-  db:
-    image: postgres
+  nest-api:
+    container_name: nest-api
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # target: prod
     ports:
-      - 5432:5432
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: nestjs
+      - 5000:5000
+    depends_on:
+      - postgres
+    env_file:
+      - .env
     networks:
-      - nestjs
+      - tlu-management
+
+  nginx:
+    container_name: nginx
+    build:
+      context: ./nginx
+    ports:
+      - 80:80
+    depends_on:
+      - nest-api
+    networks:
+      - tlu-management
+
+  postgres:
+    image: postgres
+    container_name: postgres
+    restart: always
+    ports:
+      - ${DB_PORT}:5432
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    networks:
+      - tlu-management
+
+volumes:
+  postgres:
+    name: nest-db
 
 networks:
-  nestjs:
+  tlu-management:
+    external: true
